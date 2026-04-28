@@ -55,7 +55,6 @@ def search():
     cur = conn.cursor()
 
     cur.execute("SELECT * FROM search_contacts(%s)", (q,))
-
     for row in cur.fetchall():
         print(row)
 
@@ -84,7 +83,7 @@ def filter_group():
 
 
 def sort_contacts():
-    field = input("Sort by (name/birthday): ")
+    field = input("Sort by (name/birthday/date): ")
 
     conn = connect()
     cur = conn.cursor()
@@ -93,6 +92,8 @@ def sort_contacts():
         cur.execute("SELECT name, email FROM contacts ORDER BY name")
     elif field == "birthday":
         cur.execute("SELECT name, email FROM contacts ORDER BY birthday")
+    elif field == "date":
+        cur.execute("SELECT name, email FROM contacts ORDER BY created_at")
 
     for row in cur.fetchall():
         print(row)
@@ -101,6 +102,7 @@ def sort_contacts():
     conn.close()
 
 
+# 🔥 ПАГИНАЦИЯ ЧЕРЕЗ DB FUNCTION
 def paginate():
     offset = 0
     limit = 3
@@ -109,9 +111,10 @@ def paginate():
     cur = conn.cursor()
 
     while True:
-        cur.execute("SELECT name, email FROM contacts LIMIT %s OFFSET %s", (limit, offset))
+        cur.execute("SELECT * FROM get_contacts_page(%s,%s)", (limit, offset))
 
-        for r in cur.fetchall():
+        rows = cur.fetchall()
+        for r in rows:
             print(r)
 
         cmd = input("next / prev / quit: ")
@@ -139,7 +142,6 @@ def export_json():
     """)
 
     data = cur.fetchall()
-
     contacts = {}
 
     for row in data:
@@ -184,11 +186,14 @@ def import_json():
         exists = cur.fetchone()
 
         if exists:
-            choice = input(f"{name} exists (skip/overwrite): ")
-            if choice == "skip":
+            choice = input(f"{name} exists (1-skip / 2-overwrite): ")
+
+            if choice == "1":
                 continue
-            elif choice == "overwrite":
+            elif choice == "2":
                 cur.execute("DELETE FROM contacts WHERE name=%s", (name,))
+            else:
+                continue
 
         cur.execute(
             "INSERT INTO contacts(name,email,birthday) VALUES (%s,%s,%s)",
