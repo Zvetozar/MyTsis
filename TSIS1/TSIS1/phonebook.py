@@ -83,6 +83,50 @@ def filter_group():
     conn.close()
 
 
+def sort_contacts():
+    field = input("Sort by (name/birthday): ")
+
+    conn = connect()
+    cur = conn.cursor()
+
+    if field == "name":
+        cur.execute("SELECT name, email FROM contacts ORDER BY name")
+    elif field == "birthday":
+        cur.execute("SELECT name, email FROM contacts ORDER BY birthday")
+
+    for row in cur.fetchall():
+        print(row)
+
+    cur.close()
+    conn.close()
+
+
+def paginate():
+    offset = 0
+    limit = 3
+
+    conn = connect()
+    cur = conn.cursor()
+
+    while True:
+        cur.execute("SELECT name, email FROM contacts LIMIT %s OFFSET %s", (limit, offset))
+
+        for r in cur.fetchall():
+            print(r)
+
+        cmd = input("next / prev / quit: ")
+
+        if cmd == "next":
+            offset += limit
+        elif cmd == "prev":
+            offset = max(0, offset - limit)
+        elif cmd == "quit":
+            break
+
+    cur.close()
+    conn.close()
+
+
 def export_json():
     conn = connect()
     cur = conn.cursor()
@@ -96,19 +140,28 @@ def export_json():
 
     data = cur.fetchall()
 
-    result = []
+    contacts = {}
+
     for row in data:
-        result.append({
-            "name": row[0],
-            "email": row[1],
-            "birthday": str(row[2]),
-            "group": row[3],
-            "phone": row[4],
-            "type": row[5]
-        })
+        name = row[0]
+
+        if name not in contacts:
+            contacts[name] = {
+                "name": name,
+                "email": row[1],
+                "birthday": str(row[2]),
+                "group": row[3],
+                "phones": []
+            }
+
+        if row[4]:
+            contacts[name]["phones"].append({
+                "phone": row[4],
+                "type": row[5]
+            })
 
     with open("contacts.json", "w", encoding="utf-8") as f:
-        json.dump(result, f, indent=4)
+        json.dump(list(contacts.values()), f, indent=4)
 
     cur.close()
     conn.close()
@@ -126,8 +179,6 @@ def import_json():
         email = item["email"]
         birthday = item["birthday"]
         group = item["group"]
-        phone = item["phone"]
-        ptype = item["type"]
 
         cur.execute("SELECT id FROM contacts WHERE name=%s", (name,))
         exists = cur.fetchone()
@@ -145,7 +196,9 @@ def import_json():
         )
 
         cur.execute("CALL move_to_group(%s,%s)", (name, group))
-        cur.execute("CALL add_phone(%s,%s,%s)", (name, phone, ptype))
+
+        for p in item["phones"]:
+            cur.execute("CALL add_phone(%s,%s,%s)", (name, p["phone"], p["type"]))
 
     conn.commit()
     cur.close()
@@ -162,7 +215,9 @@ def menu():
 5 Filter group
 6 Export JSON
 7 Import JSON
-8 Exit
+8 Sort
+9 Pagination
+10 Exit
 """)
 
         choice = input("Choose: ")
@@ -182,6 +237,10 @@ def menu():
         elif choice == "7":
             import_json()
         elif choice == "8":
+            sort_contacts()
+        elif choice == "9":
+            paginate()
+        elif choice == "10":
             break
 
 menu()

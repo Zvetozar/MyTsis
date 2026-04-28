@@ -39,3 +39,15 @@ BEGIN
        OR p.phone ILIKE '%' || p_query || '%';
 END;
 $$ LANGUAGE plpgsql;
+
+-- 🔥 ПАГИНАЦИЯ В БД (как требует TSIS)
+CREATE OR REPLACE FUNCTION get_contacts_page(p_limit INT, p_offset INT)
+RETURNS TABLE(name VARCHAR, email VARCHAR) AS $$
+BEGIN
+    RETURN QUERY
+    SELECT c.name, c.email
+    FROM contacts c
+    ORDER BY c.created_at
+    LIMIT p_limit OFFSET p_offset;
+END;
+$$ LANGUAGE plpgsql;

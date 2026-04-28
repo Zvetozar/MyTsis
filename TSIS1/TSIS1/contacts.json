@@ -1,0 +1,14 @@
+[
+    {
+        "name": "Ernazavr",
+        "email": "ernazarajsking@gmail.com",
+        "birthday": "2007-09-16",
+        "group": null,
+        "phones": [
+            {
+                "phone": "87071263446",
+                "type": "work"
+            }
+        ]
+    }
+]
