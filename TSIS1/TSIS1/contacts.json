@@ -3,12 +3,23 @@
         "name": "Ernazavr",
         "email": "ernazarajsking@gmail.com",
         "birthday": "2007-09-16",
-        "group": null,
+        "group": "Me",
         "phones": [
+            {
+                "phone": "87071263446",
+                "type": "work"
+            },
             {
                 "phone": "87071263446",
                 "type": "work"
             }
         ]
+    },
+    {
+        "name": "Michael",
+        "email": "jackson123@gmail.com",
+        "birthday": "1958-08-29",
+        "group": null,
+        "phones": []
     }
 ]

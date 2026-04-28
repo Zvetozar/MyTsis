@@ -180,7 +180,11 @@ def import_json():
         name = item["name"]
         email = item["email"]
         birthday = item["birthday"]
-        group = item["group"]
+
+        # 🔥 ФИКС ГРУППЫ
+        group = item.get("group")
+        if not group:
+            group = "Other"
 
         cur.execute("SELECT id FROM contacts WHERE name=%s", (name,))
         exists = cur.fetchone()
@@ -200,9 +204,10 @@ def import_json():
             (name, email, birthday)
         )
 
+        # 🔥 теперь всегда есть группа
         cur.execute("CALL move_to_group(%s,%s)", (name, group))
 
-        for p in item["phones"]:
+        for p in item.get("phones", []):
             cur.execute("CALL add_phone(%s,%s,%s)", (name, p["phone"], p["type"]))
 
     conn.commit()
